@@ -79,25 +79,33 @@
     }
 
     async function handleShare() {
-        if (!liff.isApiAvailable('shareTargetPicker')) {
-            alert('請在 LINE 內使用此功能');
-            return;
-        }
-        try {
-            const res = await liff.shareTargetPicker([
-                {
-                    "type": "image",
-                    "originalContentUrl": finalImgUrl,
-                    "previewImageUrl": finalImgUrl
-                }
-            ]);
-            if (res) {
-                liff.closeWindow(); 
-            }
-        } catch (error) {
-            document.getElementById('status').innerText = '請點下方按鈕手動分享';
-        }
+    if (!liff.isApiAvailable('shareTargetPicker')) {
+        alert('請在 LINE App 內開啟此功能');
+        return;
     }
+    try {
+        // 使用最穩定的「純圖片」格式發送
+        const res = await liff.shareTargetPicker([
+            {
+                "type": "image",
+                "originalContentUrl": finalImgUrl, // 這裡會自動帶入你的早安圖網址
+                "previewImageUrl": finalImgUrl
+            }
+        ]);
+
+        if (res) {
+            // 分享成功後，彈出提示並關閉視窗
+            alert("已成功分享！");
+            liff.closeWindow(); 
+        } else {
+            // 使用者點擊了取消分享
+            console.log("使用者取消分享");
+        }
+    } catch (error) {
+        // 捕捉錯誤，方便我們知道發生什麼事
+        alert("分享失敗，原因：" + error.message);
+    }
+}
 
     main();
 </script>
