@@ -55,7 +55,7 @@
             } else {
                 const auto = new URLSearchParams(window.location.search).get('autoShare');
                 if (auto === '1') {
-                    setTimeout(handleShare, 1000); 
+                    setTimeout(handleShare, 800); 
                 }
                 document.getElementById('btnShare').onclick = handleShare;
             }
@@ -81,20 +81,6 @@
                             "size": "full",
                             "aspectRatio": "3:4",
                             "aspectMode": "cover"
-                        },
-                        "body": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "contents": [
-                                {
-                                    "type": "text",
-                                    "text": "🌸 祝您有美好的一天",
-                                    "weight": "bold",
-                                    "size": "md",
-                                    "color": "#555555",
-                                    "align": "center"
-                                }
-                            ]
                         },
                         "footer": {
                             "type": "box",
