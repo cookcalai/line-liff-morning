@@ -8,26 +8,23 @@
     <style>
         body { margin: 0; padding: 0; background-color: #ffffff; font-family: sans-serif; text-align: center; }
         .container { width: 100%; max-width: 500px; margin: 0 auto; }
-        #mainImg { width: 100%; display: block; border-bottom: 2px solid #eee; }
-        .info-box { padding: 30px 20px; }
-        .status-text { color: #00c300; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+        #mainImg { width: 100%; display: block; }
+        .info-box { padding: 40px 20px; }
+        .status-text { color: #00c300; font-size: 20px; font-weight: bold; }
         .share-btn { 
             background-color: #00c300; color: white; border: none; 
             padding: 18px; border-radius: 50px; font-size: 20px; 
-            font-weight: bold; width: 90%; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            font-weight: bold; width: 90%; cursor: pointer; margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="image-header">
-        <img src="" id="mainImg" alt="今日早安圖">
-    </div>
+    <img src="" id="mainImg">
     <div class="info-box">
-        <div id="status" class="status-text">🚀 正在為您開啟分享選單...</div>
-        <button class="share-btn" id="btnShare" style="display:none;">點我選擇好友分享</button>
+        <div id="status" class="status-text">🚀 正在自動開啟分享選單...</div>
+        <button class="share-btn" id="btnShare">手動選擇好友分享</button>
     </div>
 </div>
 
@@ -49,18 +46,16 @@
         try {
             await liff.init({ liffId: MY_LIFF_ID });
             rawImgUrl = getImageUrlFromUrl();
-
             if (rawImgUrl) {
                 document.getElementById('mainImg').src = rawImgUrl;
-                document.getElementById('btnShare').style.display = 'inline-block';
             }
 
             if (!liff.isLoggedIn()) {
                 liff.login();
             } else {
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.get('autoShare') === '1') {
-                    setTimeout(handleShare, 800); 
+                const auto = new URLSearchParams(window.location.search).get('autoShare');
+                if (auto === '1') {
+                    setTimeout(handleShare, 1000); 
                 }
                 document.getElementById('btnShare').onclick = handleShare;
             }
@@ -71,14 +66,13 @@
 
     async function handleShare() {
         if (!rawImgUrl) return;
-        // 編碼網址，防止空格報錯
         const safeImgUrl = encodeURI(rawImgUrl);
 
         try {
             const res = await liff.shareTargetPicker([
                 {
                     "type": "flex",
-                    "altText": "早安！送您一張精美早安圖",
+                    "altText": "☀️ 您有一張新的早安圖！",
                     "contents": {
                         "type": "bubble",
                         "hero": {
@@ -87,6 +81,20 @@
                             "size": "full",
                             "aspectRatio": "3:4",
                             "aspectMode": "cover"
+                        },
+                        "body": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                                {
+                                    "type": "text",
+                                    "text": "🌸 祝您有美好的一天",
+                                    "weight": "bold",
+                                    "size": "md",
+                                    "color": "#555555",
+                                    "align": "center"
+                                }
+                            ]
                         },
                         "footer": {
                             "type": "box",
@@ -107,14 +115,11 @@
                     }
                 }
             ]);
-            if (res) {
-                liff.closeWindow(); 
-            }
+            if (res) liff.closeWindow(); 
         } catch (error) {
             console.log("分享失敗", error);
         }
     }
-
     main();
 </script>
 </body>
