@@ -6,38 +6,39 @@
     <title>早安圖分享</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { margin: 0; padding: 0; background-color: #ffffff; }
-        .container { width: 100%; max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; }
-        .image-header { width: 100%; min-height: 300px; background-color: #f0f0f0; display: flex; justify-content: center; align-items: center;}
-        .image-header img { width: 100%; display: block; }
-        .button-section { padding: 20px; text-align: center; }
+        body { margin: 0; padding: 0; background-color: #ffffff; font-family: sans-serif; }
+        .container { width: 100%; max-width: 500px; margin: 0 auto; text-align: center; }
+        .image-header img { width: 100%; display: block; border-bottom: 2px solid #eee; }
+        .info-box { padding: 20px; }
+        .status-text { color: #555; font-size: 18px; margin-bottom: 15px; font-weight: bold; }
         .share-btn { 
             background-color: #00c300; color: white; border: none; 
             padding: 18px; border-radius: 50px; font-size: 20px; 
-            font-weight: bold; width: 100%; cursor: pointer; 
+            font-weight: bold; width: 90%; cursor: pointer; display: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         .share-btn:active { background-color: #00a000; transform: scale(0.98); }
-        #status { font-size: 14px; color: #666; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="image-header">
-        <img src="" id="mainImg" alt="載入圖片中...">
+        <img src="" id="mainImg" alt="今日早安圖">
     </div>
-    <div class="button-section">
-        <button class="share-btn" id="btnShare" style="display:none;">一鍵分享給親友</button>
-        <div id="status">正在讀取今日早安圖...</div>
+    <div class="info-box">
+        <div id="status" class="status-text">🚀 正在為您開啟分享選單...</div>
+        <button class="share-btn" id="btnShare">點我選擇親友分享</button>
+        <p id="hint" style="color: #999; font-size: 14px; margin-top: 10px; display:none;">
+            若沒自動跳出，請點上方綠色按鈕
+        </p>
     </div>
 </div>
 
 <script>
-    // 你的專屬 LIFF ID
     const MY_LIFF_ID = '2010018151-9jXRcdtg'; 
     let finalImgUrl = '';
 
-    // 自動從網址抓取圖片參數
     function getImageUrlFromUrl() {
         const urlParams = new URLSearchParams(window.location.search);
         let img = urlParams.get('img');
@@ -53,43 +54,49 @@
             await liff.init({ liffId: MY_LIFF_ID });
             finalImgUrl = getImageUrlFromUrl();
 
-            // 如果有抓到圖片，就顯示圖片與按鈕
             if (finalImgUrl) {
                 document.getElementById('mainImg').src = finalImgUrl;
-                document.getElementById('status').style.display = 'none';
-                document.getElementById('btnShare').style.display = 'block';
-            } else {
-                document.getElementById('status').innerText = '找不到圖片，請確認網址是否正確帶有 img 參數！';
+                document.getElementById('btnShare').style.display = 'inline-block';
+                document.getElementById('hint').style.display = 'block';
             }
 
-            // 確保使用者有登入 LINE
             if (!liff.isLoggedIn()) {
                 liff.login();
             } else {
-                setupButton();
+                // *** 關鍵：自動觸發分享 ***
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('autoShare') === '1') {
+                    setTimeout(() => {
+                        handleShare();
+                    }, 500); // 稍微延遲讓網頁載入更穩
+                }
+                
+                document.getElementById('btnShare').onclick = handleShare;
             }
         } catch (err) {
             document.getElementById('status').innerText = '系統錯誤：' + err;
         }
     }
 
-    // 設定綠色按鈕的分享功能
-    function setupButton() {
-        document.getElementById('btnShare').addEventListener('click', async () => {
-            if (!liff.isApiAvailable('shareTargetPicker')) return;
-            try {
-                const res = await liff.shareTargetPicker([
-                    {
-                        "type": "image",
-                        "originalContentUrl": finalImgUrl,
-                        "previewImageUrl": finalImgUrl
-                    }
-                ]);
-                if (res) liff.closeWindow(); // 分享成功後自動關閉畫面
-            } catch (error) {
-                console.log('分享失敗', error);
+    async function handleShare() {
+        if (!liff.isApiAvailable('shareTargetPicker')) {
+            alert('請在 LINE 內使用此功能');
+            return;
+        }
+        try {
+            const res = await liff.shareTargetPicker([
+                {
+                    "type": "image",
+                    "originalContentUrl": finalImgUrl,
+                    "previewImageUrl": finalImgUrl
+                }
+            ]);
+            if (res) {
+                liff.closeWindow(); 
             }
-        });
+        } catch (error) {
+            document.getElementById('status').innerText = '請點下方按鈕手動分享';
+        }
     }
 
     main();
