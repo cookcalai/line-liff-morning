@@ -71,22 +71,47 @@
 
     async function handleShare() {
         if (!rawImgUrl) return;
+        // 編碼網址，防止空格報錯
         const safeImgUrl = encodeURI(rawImgUrl);
 
         try {
             const res = await liff.shareTargetPicker([
                 {
-                    "type": "image",
-                    "originalContentUrl": safeImgUrl,
-                    "previewImageUrl": safeImgUrl
+                    "type": "flex",
+                    "altText": "早安！送您一張精美早安圖",
+                    "contents": {
+                        "type": "bubble",
+                        "hero": {
+                            "type": "image",
+                            "url": safeImgUrl,
+                            "size": "full",
+                            "aspectRatio": "3:4",
+                            "aspectMode": "cover"
+                        },
+                        "footer": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                                {
+                                    "type": "button",
+                                    "style": "primary",
+                                    "color": "#00c300",
+                                    "action": {
+                                        "type": "uri",
+                                        "label": "一鍵分享給親友",
+                                        "uri": "https://liff.line.me/" + MY_LIFF_ID + "?img=" + safeImgUrl + "&autoShare=1"
+                                    }
+                                }
+                            ]
+                        }
+                    }
                 }
             ]);
             if (res) {
-                // 這裡把 alert 刪掉了，分享完直接關閉，超順暢！
                 liff.closeWindow(); 
             }
         } catch (error) {
-            console.log("分享失敗");
+            console.log("分享失敗", error);
         }
     }
 
