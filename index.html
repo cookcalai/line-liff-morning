@@ -67,6 +67,12 @@
     async function handleShare() {
         if (!rawImgUrl) return;
         const safeImgUrl = encodeURI(rawImgUrl);
+        
+        // 這是下面綠色按鈕用的「分享網址」
+        const liffShareUrl = "https://liff.line.me/" + MY_LIFF_ID + "?img=" + safeImgUrl + "&autoShare=1";
+        
+        // ⭐⭐⭐ 把這裡換成你想要點圖跳過去的網址！ ⭐⭐⭐
+        const targetUrl = "https://cookcalia.com"; 
 
         try {
             const res = await liff.shareTargetPicker([
@@ -80,7 +86,11 @@
                             "url": safeImgUrl,
                             "size": "full",
                             "aspectRatio": "3:4",
-                            "aspectMode": "cover"
+                            "aspectMode": "cover",
+                            "action": {
+                                "type": "uri",
+                                "uri": targetUrl // 圖片點下去會跳到 targetUrl
+                            }
                         },
                         "footer": {
                             "type": "box",
@@ -93,7 +103,7 @@
                                     "action": {
                                         "type": "uri",
                                         "label": "一鍵分享給親友",
-                                        "uri": "https://liff.line.me/" + MY_LIFF_ID + "?img=" + safeImgUrl + "&autoShare=1"
+                                        "uri": liffShareUrl // 綠色按鈕點下去會繼續分享
                                     }
                                 }
                             ]
