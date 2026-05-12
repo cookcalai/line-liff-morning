@@ -66,13 +66,15 @@
 
     async function handleShare() {
         if (!rawImgUrl) return;
-        const safeImgUrl = encodeURI(rawImgUrl);
         
-        // 這是下面綠色按鈕用的「分享網址」，讓拿到圖的人可以繼續傳給別人
-        const liffShareUrl = "https://liff.line.me/" + MY_LIFF_ID + "?img=" + safeImgUrl + "&autoShare=1";
+        // 🚨 修正點：移除 encodeURI，防止網址被「二次編碼」導致破圖
+        const safeImgUrl = rawImgUrl; 
         
-        // ⭐⭐⭐ 選擇 B 魔法：這裡直接換成你的 LINE 機器人加好友連結！ ⭐⭐⭐
-        // 👉 請把 @你的機器人ID 換成真實的 ID (例如 @354chtno)
+        // 綠色按鈕用的分享網址，這裡需要把整串圖片網址打包起來傳給下一個人
+        const liffShareUrl = "https://liff.line.me/" + MY_LIFF_ID + "?autoShare=1&img=" + encodeURIComponent(safeImgUrl);
+        
+        // ⭐⭐⭐ 選擇 B 魔法：換成你的 LINE 機器人加好友連結！ ⭐⭐⭐
+        // 👉 請把 @你的機器人ID 換成真實的 ID
         const targetUrl = "https://line.me/R/ti/p/@354chtno"; 
 
         try {
@@ -90,7 +92,7 @@
                             "aspectMode": "cover",
                             "action": {
                                 "type": "uri",
-                                "uri": targetUrl // 親友點擊圖片，就會瞬間跳出加好友畫面！
+                                "uri": targetUrl // 親友點擊圖片，就會跳出加好友畫面！
                             }
                         },
                         "footer": {
