@@ -11,7 +11,6 @@
         #mainImg { width: 100%; min-height: 200px; background-color: #e0e0e0; display: block; object-fit: cover; }
         .info-box { padding: 30px 20px; }
         .status-text { color: #00c300; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-        .debug-text { color: #888; font-size: 10px; word-break: break-all; margin-bottom: 20px; padding: 10px; background: #f9f9f9; border-radius: 5px;}
         .share-btn { 
             background-color: #00c300; color: white; border: none; 
             padding: 16px; border-radius: 12px; font-size: 18px; 
@@ -22,37 +21,20 @@
 <body>
 
 <div class="container">
-    <img src="" id="mainImg" alt="正在抓取美麗的早安圖...">
+    <img src="" id="mainImg" alt="正在載入圖片...">
     <div class="info-box">
-        <div id="status" class="status-text">🚀 正在為您準備卡片...</div>
-        <div id="debugInfo" class="debug-text">抓取網址中...</div>
+        <div id="status" class="status-text">🚀 正在自動開啟分享選單...</div>
         <button class="share-btn" id="btnShare">手動選擇好友分享</button>
     </div>
 </div>
 
 <script>
     const MY_LIFF_ID = '2010018151-9jXRcdtg'; 
-    let finalImgUrl = '';
+    let rawImgUrl = '';
 
-    // 終極網址修復魔法：把所有亂七八糟的編碼洗掉，重新統一換成標準 %20
-    function cleanUrl(url) {
-        if (!url) return '';
-        try {
-            // 把 %2520 (雙重編碼) 或 %20 全部還原成真實的空白鍵
-            let cleaned = url.replace(/%2520/g, ' ').replace(/%20/g, ' ');
-            // 再把空白鍵乾淨俐落地換成 LINE 唯一看得懂的 %20
-            return cleaned.replace(/ /g, '%20');
-        } catch(e) {
-            return url;
-        }
-    }
-
-    // 負責從網址列抓出 n8n 傳過來的圖
     function getImageUrlFromUrl() {
         const urlParams = new URLSearchParams(window.location.search);
         let img = urlParams.get('img');
-        
-        // 處理 LIFF 獨特的 liff.state 傳遞方式
         if (!img && urlParams.get('liff.state')) {
             let stateStr = urlParams.get('liff.state');
             if (!stateStr.startsWith('?')) stateStr = '?' + stateStr;
@@ -65,53 +47,45 @@
     async function main() {
         try {
             await liff.init({ liffId: MY_LIFF_ID });
+            rawImgUrl = getImageUrlFromUrl();
             
-            // 抓圖並丟進「超級洗衣機」清洗
-            let rawImg = getImageUrlFromUrl();
-            finalImgUrl = cleanUrl(rawImg);
-
-            // 把洗乾淨的網址印在畫面上讓我們檢查
-            document.getElementById('debugInfo').innerText = "圖片網址確認: " + (finalImgUrl || "無");
-
-            if (finalImgUrl) {
-                document.getElementById('mainImg').src = finalImgUrl;
-            } else {
-                document.getElementById('status').innerText = '❌ 找不到圖片網址，請回 LINE 重新點擊';
-                return;
+            if (rawImgUrl) {
+                // 畫面上先顯示圖片，讓使用者安心
+                try {
+                    document.getElementById('mainImg').src = decodeURI(rawImgUrl);
+                } catch(e) {
+                    document.getElementById('mainImg').src = rawImgUrl;
+                }
             }
 
             if (!liff.isLoggedIn()) {
-                liff.login({ redirectUri: window.location.href });
+                liff.login();
             } else {
-                // 判斷是否需要自動彈出分享
-                let isAutoShare = new URLSearchParams(window.location.search).get('autoShare') === '1';
-                if (!isAutoShare && window.location.search.includes('autoShare=1')) {
-                    isAutoShare = true;
-                }
-                
-                if (isAutoShare) {
-                    document.getElementById('status').innerText = '🚀 正在自動開啟分享選單...';
+                const auto = new URLSearchParams(window.location.search).get('autoShare');
+                if (auto === '1') {
                     setTimeout(handleShare, 800); 
-                } else {
-                    document.getElementById('status').innerText = '✅ 卡片準備完成';
                 }
                 document.getElementById('btnShare').onclick = handleShare;
             }
         } catch (err) {
-            document.getElementById('status').innerText = '初始化錯誤：' + err;
+            document.getElementById('status').innerText = '系統錯誤：' + err;
         }
     }
 
     async function handleShare() {
-        if (!finalImgUrl) {
-            alert("找不到圖片網址，無法分享！");
-            return;
-        }
+        if (!rawImgUrl) return;
+
+        // 🌟 核心防護網：先解除所有編碼，再重新編碼一次，徹底消滅 %2520 破圖問題！
+        let cleanUrl = rawImgUrl;
+        try {
+            cleanUrl = decodeURI(rawImgUrl); // 將可能重複的 %20 還原成純空白
+        } catch (e) {}
+        const safeImgUrl = encodeURI(cleanUrl); // 確保乾淨地轉成 %20 (不多也不少！)
         
-        // 綠色按鈕的網址：負責把這個洗乾淨的圖片繼續傳給下一個親友
-        const liffShareUrl = "https://liff.line.me/" + MY_LIFF_ID + "?autoShare=1&img=" + encodeURIComponent(finalImgUrl);
+        // 綠色按鈕用的分享網址
+        const liffShareUrl = "https://liff.line.me/" + MY_LIFF_ID + "?autoShare=1&img=" + encodeURIComponent(safeImgUrl);
         
-        // ⭐ 你的機器人專屬加好友連結 ⭐
+        // ⭐ 點擊圖片跳轉加好友的網址
         const targetUrl = "https://line.me/R/ti/p/@354chtno"; 
 
         try {
@@ -123,7 +97,7 @@
                         "type": "bubble",
                         "hero": {
                             "type": "image",
-                            "url": finalImgUrl,
+                            "url": safeImgUrl,
                             "size": "full",
                             "aspectRatio": "3:4",
                             "aspectMode": "cover",
@@ -154,7 +128,7 @@
             if (res) liff.closeWindow(); 
         } catch (error) {
             console.log("分享失敗", error);
-            document.getElementById('status').innerText = '❌ 分享取消或失敗，請點擊上方綠色按鈕重試';
+            document.getElementById('status').innerText = '❌ 分享失敗，請重試';
         }
     }
     main();
