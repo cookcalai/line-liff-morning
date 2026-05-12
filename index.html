@@ -68,11 +68,12 @@
         if (!rawImgUrl) return;
         const safeImgUrl = encodeURI(rawImgUrl);
         
-        // 這是下面綠色按鈕用的「分享網址」
+        // 這是下面綠色按鈕用的「分享網址」，讓拿到圖的人可以繼續傳給別人
         const liffShareUrl = "https://liff.line.me/" + MY_LIFF_ID + "?img=" + safeImgUrl + "&autoShare=1";
         
-        // ⭐⭐⭐ 把這裡換成你想要點圖跳過去的網址！ ⭐⭐⭐
-        const targetUrl = "https://cookcalai.github.io/line-liff-morning/promo.html"; 
+        // ⭐⭐⭐ 選擇 B 魔法：這裡直接換成你的 LINE 機器人加好友連結！ ⭐⭐⭐
+        // 👉 請把 @你的機器人ID 換成真實的 ID (例如 @354chtno)
+        const targetUrl = "https://line.me/R/ti/p/@354chtno"; 
 
         try {
             const res = await liff.shareTargetPicker([
@@ -89,7 +90,7 @@
                             "aspectMode": "cover",
                             "action": {
                                 "type": "uri",
-                                "uri": targetUrl // 圖片點下去會跳到 targetUrl
+                                "uri": targetUrl // 親友點擊圖片，就會瞬間跳出加好友畫面！
                             }
                         },
                         "footer": {
@@ -103,7 +104,7 @@
                                     "action": {
                                         "type": "uri",
                                         "label": "一鍵分享給親友",
-                                        "uri": liffShareUrl // 綠色按鈕點下去會繼續分享
+                                        "uri": liffShareUrl
                                     }
                                 }
                             ]
