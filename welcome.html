@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>早安圖領取</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; background-color: #f0f8ff; margin: 0; }
+        h1 { color: #2e8b57; font-size: 24px; margin-bottom: 10px; }
+        p { color: #555; font-size: 16px; text-align: center; padding: 0 20px; word-break: break-all; }
+        .loader { border: 6px solid #f3f3f3; border-top: 6px solid #2e8b57; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;}
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+    <div class="loader"></div>
+    <h1 id="title">正在為您準備專屬早安圖...</h1>
+    <p id="desc">系統正在連接 LINE，請稍候...</p>
+
+    <script>
+        async function main() {
+            try {
+                await liff.init({ liffId: "2010018151-6Dvi57Gd" });
+
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+
+                // 1. 抓取介紹人 ID
+                let refId = new URLSearchParams(window.location.search).get('ref');
+                if (!refId) {
+                    const liffState = new URLSearchParams(window.location.search).get('liff.state');
+                    if (liffState) {
+                        refId = new URLSearchParams(liffState).get('ref');
+                    }
+                }
+
+                // 2. 抓取新長輩 ID
+                const profile = await liff.getProfile();
+                const newUserId = profile.userId;
+
+                if (refId && newUserId) {
+                    // 3. 呼叫你的 n8n 儲存通道 (精準投遞)
+                    const postUrl = "https://service.cookcalai.com/n8n/webhook/save-ref";
+
+                    const response = await fetch(postUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            new_user_id: newUserId,
+                            referred_by: refId
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`伺服器存取失敗，代碼: ${response.status}`);
+                    }
+                }
+
+                // 4. 顯示成功並關閉
+                document.getElementById('title').innerText = "綁定成功！🎉";
+                document.getElementById('desc').innerText = "請回到 LINE 聊天室，小幫手已經準備好迎接您囉！";
+                document.querySelector('.loader').style.display = 'none';
+
+                setTimeout(() => {
+                    liff.closeWindow();
+                }, 2000);
+
+            } catch (error) {
+                document.querySelector('.loader').style.display = 'none';
+                document.getElementById('title').style.color = "#d9534f";
+                document.getElementById('title').innerText = "哎呀，連線小故障 😢";
+                document.getElementById('desc').innerText = "錯誤訊息: " + error.message;
+            }
+        }
+
+        // 確保網頁讀取完畢再執行
+        window.onload = () => {
+            main();
+        };
+    </script>
+</body>
+</html>
